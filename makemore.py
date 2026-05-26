@@ -1,10 +1,9 @@
 import torch 
+import torch.nn.functional as F
 
 # -----------------------------------------------------------------------------
 
 words = open('names.txt', 'r').read().splitlines()
-
-# -----------------------------------------------------------------------------
 
 # The bigram counts the frequencies of consecutive character pairs 
 b = {}
@@ -14,11 +13,6 @@ for w in words:
         bigram = (char1, char2)
         b[bigram] = b.get(bigram, 0) + 1
         # print(char1, char2)
-
-# Sorting the pair:frequency tuples
-# print(sorted(b.items(), key = lambda kv : -kv[1]))
-
-# -----------------------------------------------------------------------------
 
 # Initialize 28x28 array 
 N = torch.zeros((27, 27), dtype = torch.int32)
@@ -43,3 +37,40 @@ for w in words:
 
 # -----------------------------------------------------------------------------
 
+# Creating training set of bigrams (x, y) for all words
+xs, ys = [], [] 
+for w in words:
+    chs = ['.'] + list(w) + ['.']
+    for ch1, ch2 in zip(chs, chs[1:]):
+        ix1 = stoi[ch1] ; ix2 = stoi[ch2]
+        xs.append(ix1) ; ys.append(ix2)
+
+xs = torch.tensor(xs)
+ys = torch.tensor(ys)
+num = xs.nelement()
+
+# Randomly initialize 27 neurons' weights. Each neuron receives 27 inputs 
+g = torch.Generator().manual_seed(2147483647)
+W = torch.randn((27, 27), generator = g, requires_grad = True)
+
+# -----------------------------------------------------------------------------
+
+# Gradient Descent: 
+for k in range(10):
+    
+    # Forward pass: 
+    xenc = F.one_hot(xs, num_classes = 27).float() # input to the network: one-hot encoding 
+    logits = xenc @ W # predict log-counts 
+    counts = logits.exp() # counts, equivalent to N 
+    probs = counts / counts.sum(1, keepdims = True) # probabilities for next character 
+    loss = -probs[torch.arange(num), ys].log().mean()
+    print(k, loss.item())
+
+    # Backward pass: 
+    W.grad = None # Set the gradients to 0
+    loss.backward()
+    
+    # Update gradients: 
+    W.data += -0.1 * W.grad 
+
+# -----------------------------------------------------------------------------
