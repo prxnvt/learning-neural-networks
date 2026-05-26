@@ -4,12 +4,6 @@
   "python.terminal.activateEnvInCurrentTerminal": true,
   "jupyter.notebookFileRoot": "${workspaceFolder}",
   "notebook.kernelPicker.type": "mru",
-  "jupyter.kernels.filter": [
-    {
-      "path": "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
-      "type": "pythonEnvironment"
-    }
-  ],
   "[python]": {
     "editor.formatOnSave": false,
     "editor.defaultFormatter": "ms-python.python"
@@ -17,5 +11,8 @@
   "files.exclude": {
     "**/__pycache__": true,
     "**/.ipynb_checkpoints": true
-  }
+  },
+  "jupyter.kernels.excludePythonEnvironments": [
+    "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3"
+  ]
 }
