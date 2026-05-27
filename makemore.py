@@ -55,22 +55,68 @@ W = torch.randn((27, 27), generator = g, requires_grad = True)
 
 # -----------------------------------------------------------------------------
 
-# Gradient Descent: 
-for k in range(10):
-    
+# # Gradient Descent: 
+epsilon = 0.0001
+prev_loss = 0.0
+counter = 0
+while counter < 1000:
+
     # Forward pass: 
     xenc = F.one_hot(xs, num_classes = 27).float() # input to the network: one-hot encoding 
     logits = xenc @ W # predict log-counts 
     counts = logits.exp() # counts, equivalent to N 
     probs = counts / counts.sum(1, keepdims = True) # probabilities for next character 
     loss = -probs[torch.arange(num), ys].log().mean()
-    print(k, loss.item())
+
+    # Check and update stopping conditions
+    loss_f = float(loss.item())
+    if (abs(loss_f - prev_loss) < epsilon):
+        print(f'Converged to within ε = {epsilon}')
+        break
+    counter += 1 ; print(counter, loss.item())
+    prev_loss = loss_f
 
     # Backward pass: 
     W.grad = None # Set the gradients to 0
     loss.backward()
     
     # Update gradients: 
-    W.data += -0.1 * W.grad 
+    W.data += -50 * W.grad 
+
+
+# for k in range(100):
+    
+#     # Forward pass: 
+#     xenc = F.one_hot(xs, num_classes = 27).float() # input to the network: one-hot encoding 
+#     logits = xenc @ W # predict log-counts 
+#     counts = logits.exp() # counts, equivalent to N 
+#     probs = counts / counts.sum(1, keepdims = True) # probabilities for next character 
+#     loss = -probs[torch.arange(num), ys].log().mean() + 0.01 * (W ** 2).mean()
+#     print(k, loss.item())
+
+#     # Backward pass: 
+#     W.grad = None # Set the gradients to 0
+#     loss.backward()
+    
+#     # Update gradients: 
+#     W.data += -50 * W.grad 
 
 # -----------------------------------------------------------------------------
+
+# Making up names: 
+for i in range(5):
+    out = []
+    ix = 0
+
+    while True: 
+
+        xenc = F.one_hot(torch.tensor([ix]), num_classes = 27).float()
+        logits = xenc @ W
+        counts = logits.exp() 
+        p = counts / counts.sum(1, keepdims = True)
+
+        ix = torch.multinomial(p, num_samples = 1, replacement = True, generator = g).item()
+        out.append(itos[ix])
+        if ix == 0:
+            break
+    print(''.join(out))
